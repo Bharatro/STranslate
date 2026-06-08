@@ -409,6 +409,7 @@
 
     <!--  // Common //  -->
     <sys:String x:Key="Add">新增</sys:String>
+    <sys:String x:Key="Clear">清空</sys:String>
     <sys:String x:Key="Delete">刪除</sys:String>
     <sys:String x:Key="Overwrite">覆蓋</sys:String>
     <sys:String x:Key="Save">儲存</sys:String>
@@ -430,11 +431,30 @@
     <sys:String x:Key="On">開啟</sys:String>
     <sys:String x:Key="Off">關閉</sys:String>
     <sys:String x:Key="QrCode">QR 圖碼</sys:String>
+    <sys:String x:Key="Wizard">精靈</sys:String>
 
     <sys:String x:Key="Previous">上一個</sys:String>
     <sys:String x:Key="Next">下一個</sys:String>
 
     <sys:String x:Key="Document">文件</sys:String>
+
+    <!--  // Welcome Setup //  -->
+    <sys:String x:Key="WelcomeSetup_Title">歡迎使用 STranslate</sys:String>
+    <sys:String x:Key="WelcomeSetup_Subtitle">快速配置常用服務和關鍵快速鍵，之後也可以在「關於」頁面重新打開精靈。</sys:String>
+    <sys:String x:Key="WelcomeSetup_WelcomeDescription">第一次啟動時可以先設定語言、常用服務和關鍵快速鍵；如果暫時不想配置，也可以跳過。</sys:String>
+    <sys:String x:Key="WelcomeSetup_LanguageDescription">選擇介面語言，更改會按現有設定立即生效。</sys:String>
+    <sys:String x:Key="WelcomeSetup_Services">服務配置</sys:String>
+    <sys:String x:Key="WelcomeSetup_TranslateServices">翻譯服務</sys:String>
+    <sys:String x:Key="WelcomeSetup_OcrTtsServices">OCR / TTS 服務</sys:String>
+    <sys:String x:Key="WelcomeSetup_SpecialServices">專用服務</sys:String>
+    <sys:String x:Key="WelcomeSetup_Hotkeys">快速鍵</sys:String>
+    <sys:String x:Key="WelcomeSetup_SelectService">選擇服務</sys:String>
+    <sys:String x:Key="WelcomeSetup_SelectServiceDescription">先新增服務，再選擇要配置或啟用的服務實例。</sys:String>
+    <sys:String x:Key="WelcomeSetup_ImageTranslateServiceDescription">圖片翻譯視窗使用的文字翻譯服務。</sys:String>
+    <sys:String x:Key="WelcomeSetup_ReplaceServiceDescription">替換翻譯使用的文字翻譯服務。</sys:String>
+    <sys:String x:Key="WelcomeSetup_ImageTranslateOcrServiceDescription">圖片翻譯使用的 OCR 服務；清空後將跟隨當前啟用的 OCR 服務。</sys:String>
+    <sys:String x:Key="WelcomeSetup_Skip">跳過</sys:String>
+    <sys:String x:Key="WelcomeSetup_Finish">完成</sys:String>
 
     <!--  // Input Control //  -->
     <sys:String x:Key="RemoveLineBreak">移除換行</sys:String>

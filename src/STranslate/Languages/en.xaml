@@ -407,6 +407,7 @@
 
     <!--  // Common //  -->
     <sys:String x:Key="Add">Add</sys:String>
+    <sys:String x:Key="Clear">Clear</sys:String>
     <sys:String x:Key="Delete">Delete</sys:String>
     <sys:String x:Key="Overwrite">Overwrite</sys:String>
     <sys:String x:Key="Save">Save</sys:String>
@@ -428,11 +429,30 @@
     <sys:String x:Key="On">On</sys:String>
     <sys:String x:Key="Off">Off</sys:String>
     <sys:String x:Key="QrCode">QrCode</sys:String>
+    <sys:String x:Key="Wizard">Wizard</sys:String>
 
     <sys:String x:Key="Previous">Previous</sys:String>
     <sys:String x:Key="Next">Next</sys:String>
 
     <sys:String x:Key="Document">Document</sys:String>
+
+    <!--  // Welcome Setup //  -->
+    <sys:String x:Key="WelcomeSetup_Title">Welcome to STranslate</sys:String>
+    <sys:String x:Key="WelcomeSetup_Subtitle">Quickly configure common services and key hotkeys. You can reopen the wizard later from the About page.</sys:String>
+    <sys:String x:Key="WelcomeSetup_WelcomeDescription">Set the language, common services, and key hotkeys before you start. You can skip this for now.</sys:String>
+    <sys:String x:Key="WelcomeSetup_LanguageDescription">Choose the interface language. Changes use the existing language setting immediately.</sys:String>
+    <sys:String x:Key="WelcomeSetup_Services">Services</sys:String>
+    <sys:String x:Key="WelcomeSetup_TranslateServices">Translation Service</sys:String>
+    <sys:String x:Key="WelcomeSetup_OcrTtsServices">OCR / TTS Services</sys:String>
+    <sys:String x:Key="WelcomeSetup_SpecialServices">Dedicated Services</sys:String>
+    <sys:String x:Key="WelcomeSetup_Hotkeys">Hotkeys</sys:String>
+    <sys:String x:Key="WelcomeSetup_SelectService">Select Service</sys:String>
+    <sys:String x:Key="WelcomeSetup_SelectServiceDescription">Add a service first, then choose the service instance to configure or enable.</sys:String>
+    <sys:String x:Key="WelcomeSetup_ImageTranslateServiceDescription">Text translation service used by the image translation window.</sys:String>
+    <sys:String x:Key="WelcomeSetup_ReplaceServiceDescription">Text translation service used by replace translation.</sys:String>
+    <sys:String x:Key="WelcomeSetup_ImageTranslateOcrServiceDescription">OCR service used by image translation. Clear it to follow the currently enabled OCR service.</sys:String>
+    <sys:String x:Key="WelcomeSetup_Skip">Skip</sys:String>
+    <sys:String x:Key="WelcomeSetup_Finish">Finish</sys:String>
 
     <!--  // Input Control //  -->
     <sys:String x:Key="RemoveLineBreak">Remove Line Break</sys:String>

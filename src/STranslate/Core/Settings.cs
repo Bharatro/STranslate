@@ -483,10 +483,11 @@ public partial class Settings : ObservableObject
         ApplyStartMode();
     }
 
-    public void LazyInitialize()
+    public void LazyInitialize(bool initializeLanguage = true)
     {
         ApplyFontFamily(true);
-        ApplyLanguage(true);
+        if (initializeLanguage)
+            ApplyLanguage(true);
         ApplyFontSize();
         ApplyTheme();
         ApplyDeactived();

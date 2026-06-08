@@ -398,6 +398,7 @@
     <sys:String x:Key="Thanks">謝辞</sys:String>
 
     <sys:String x:Key="Add">追加</sys:String>
+    <sys:String x:Key="Clear">クリア</sys:String>
     <sys:String x:Key="Delete">削除</sys:String>
     <sys:String x:Key="Overwrite">上書き</sys:String>
     <sys:String x:Key="Save">保存</sys:String>
@@ -419,11 +420,30 @@
     <sys:String x:Key="On">オン</sys:String>
     <sys:String x:Key="Off">オフ</sys:String>
     <sys:String x:Key="QrCode">QRコード</sys:String>
+    <sys:String x:Key="Wizard">ウィザード</sys:String>
 
     <sys:String x:Key="Previous">前へ</sys:String>
     <sys:String x:Key="Next">次へ</sys:String>
 
     <sys:String x:Key="Document">ドキュメント</sys:String>
+
+    <!--  // Welcome Setup //  -->
+    <sys:String x:Key="WelcomeSetup_Title">STranslate へようこそ</sys:String>
+    <sys:String x:Key="WelcomeSetup_Subtitle">よく使うサービスと主要なホットキーをすばやく設定します。あとで「About」ページから再度開けます。</sys:String>
+    <sys:String x:Key="WelcomeSetup_WelcomeDescription">開始前に言語、よく使うサービス、主要なホットキーを設定できます。今はスキップしてもかまいません。</sys:String>
+    <sys:String x:Key="WelcomeSetup_LanguageDescription">インターフェイスの言語を選択します。変更は既存の言語設定ですぐに反映されます。</sys:String>
+    <sys:String x:Key="WelcomeSetup_Services">サービス設定</sys:String>
+    <sys:String x:Key="WelcomeSetup_TranslateServices">翻訳サービス</sys:String>
+    <sys:String x:Key="WelcomeSetup_OcrTtsServices">OCR / TTS サービス</sys:String>
+    <sys:String x:Key="WelcomeSetup_SpecialServices">専用サービス</sys:String>
+    <sys:String x:Key="WelcomeSetup_Hotkeys">ホットキー</sys:String>
+    <sys:String x:Key="WelcomeSetup_SelectService">サービスを選択</sys:String>
+    <sys:String x:Key="WelcomeSetup_SelectServiceDescription">先にサービスを追加し、設定または有効化するサービスを選択してください。</sys:String>
+    <sys:String x:Key="WelcomeSetup_ImageTranslateServiceDescription">画像翻訳ウィンドウで使用するテキスト翻訳サービス。</sys:String>
+    <sys:String x:Key="WelcomeSetup_ReplaceServiceDescription">置換翻訳で使用するテキスト翻訳サービス。</sys:String>
+    <sys:String x:Key="WelcomeSetup_ImageTranslateOcrServiceDescription">画像翻訳で使用する OCR サービス。クリアすると現在有効な OCR サービスに従います。</sys:String>
+    <sys:String x:Key="WelcomeSetup_Skip">スキップ</sys:String>
+    <sys:String x:Key="WelcomeSetup_Finish">完了</sys:String>
 
     <sys:String x:Key="RemoveLineBreak">改行を削除</sys:String>
     <sys:String x:Key="RemoveSpace">スペースを削除</sys:String>
