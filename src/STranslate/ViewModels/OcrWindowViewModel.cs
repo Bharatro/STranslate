@@ -554,7 +554,7 @@ public partial class OcrWindowViewModel : ObservableObject, IDisposable
         _lastOcrResult = null;
         IsShowingFitToWindow = false;
         IsNoLocationInfoVisible = false;
-        OcrWords.Clear();
+        OcrWords = [];
     }
 
     private static BitmapEncoder CreateBitmapEncoder(string fileName)
@@ -788,57 +788,7 @@ public partial class OcrWindowViewModel : ObservableObject, IDisposable
         if (_sourceImage == null || ocrResult?.OcrContents == null)
             return;
 
-        var ocrWords = new List<OcrWord>();
-
-        foreach (var content in ocrResult.OcrContents)
-        {
-            if (string.IsNullOrEmpty(content.Text) ||
-                content.BoxPoints == null ||
-                content.BoxPoints.Count == 0)
-                continue;
-
-            var boundingBox = CalculateBoundingBox(content.BoxPoints);
-            var charCount = content.Text.Length;
-            var avgCharWidth = boundingBox.Width / Math.Max(charCount, 1);
-
-            // 按字符拆分
-            for (int i = 0; i < charCount; i++)
-            {
-                var charLeft = boundingBox.Left + avgCharWidth * i;
-                var charBox = new Rect(charLeft, boundingBox.Top, avgCharWidth, boundingBox.Height);
-
-                ocrWords.Add(new OcrWord
-                {
-                    Text = content.Text[i].ToString(),
-                    BoundingBox = charBox
-                });
-            }
-        }
-
-        // 排序并构建全文索引
-        var sortedWords = ocrWords
-            .OrderBy(w => w.BoundingBox.Top)
-            .ThenBy(w => w.BoundingBox.Left)
-            .ToList();
-
-        OcrWords.Clear();
-        int currentIndex = 0;
-        foreach (var word in sortedWords)
-        {
-            word.StartIndexInFullText = currentIndex;
-            OcrWords.Add(word);
-            currentIndex += word.Text.Length;
-        }
-    }
-
-    private static Rect CalculateBoundingBox(List<BoxPoint> boxPoints)
-    {
-        var minX = boxPoints.Min(p => p.X);
-        var minY = boxPoints.Min(p => p.Y);
-        var maxX = boxPoints.Max(p => p.X);
-        var maxY = boxPoints.Max(p => p.Y);
-
-        return new Rect(minX, minY, maxX - minX, maxY - minY);
+        OcrWords = OcrWordBuilder.CreateFromOcrContents(ocrResult.OcrContents);
     }
 
     private static BitmapSource GenerateAnnotatedImage(OcrResult ocrResult, BitmapSource? image)

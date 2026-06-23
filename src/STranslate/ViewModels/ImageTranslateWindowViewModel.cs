@@ -116,6 +116,9 @@ public partial class ImageTranslateWindowViewModel : ObservableObject, IDisposab
     [ObservableProperty]
     public partial string Result { get; set; } = string.Empty;
 
+    [ObservableProperty]
+    public partial ObservableCollection<OcrWord> OcrWords { get; set; } = [];
+
     /// <summary>
     /// 原始图像
     /// </summary>
@@ -132,6 +135,8 @@ public partial class ImageTranslateWindowViewModel : ObservableObject, IDisposab
     private BitmapSource? _resultImage;
 
     private OcrResult? _lastOcrResult;
+    private ObservableCollection<OcrWord> _originalSelectionWords = [];
+    private ObservableCollection<OcrWord> _translatedSelectionWords = [];
 
     [ObservableProperty]
     public partial ObservableCollection<Service> OcrEngines { get; set; }
@@ -189,6 +194,9 @@ public partial class ImageTranslateWindowViewModel : ObservableObject, IDisposab
             if (Settings.CopyAfterOcr)
                 ClipboardHelper.SetText(_lastOcrResult.Text);
 
+            _originalSelectionWords = OcrWordBuilder.CreateFromOcrContents(_lastOcrResult.OcrContents);
+            RefreshSelectableOcrWords();
+
             IsNoLocationInfoVisible = !Utilities.HasBoxPoints(_lastOcrResult);
 
             // 生成原始OCR标注图像（显示识别边框）
@@ -244,6 +252,7 @@ public partial class ImageTranslateWindowViewModel : ObservableObject, IDisposab
             Result = _lastOcrResult.Text;
 
             DisplayImage = Settings.IsImTranShowingAnnotated ? _annotatedImage : _resultImage;
+            RefreshSelectableOcrWords();
         }
         catch (TaskCanceledException)
         {
@@ -356,12 +365,34 @@ public partial class ImageTranslateWindowViewModel : ObservableObject, IDisposab
         Utilities.TransformText(textBox, t => t.Replace(" ", string.Empty));
 
     [RelayCommand]
-    private void CopyImage()
+    private void CopyImage(ImageZoom? imageZoom)
     {
-        if (_sourceImage == null) return;
+        var text = imageZoom?.SelectedText;
+        try
+        {
+            if (!string.IsNullOrEmpty(text))
+            {
+                Clipboard.SetText(text);
+                _snackbar.ShowSuccess(_i18n.GetTranslation("CopySuccess"));
+                return;
+            }
 
-        Clipboard.SetImage(_sourceImage);
+            if (_sourceImage != null)
+            {
+                Clipboard.SetImage(_sourceImage);
+                return;
+            }
+
+            _snackbar.ShowWarning(_i18n.GetTranslation("NoCopyContent"));
+        }
+        catch (Exception ex)
+        {
+            _snackbar.ShowError($"{_i18n.GetTranslation("CopyFailed")}: {ex.Message}");
+        }
     }
+
+    [RelayCommand]
+    private void SelectAllText(ImageZoom? imageZoom) => imageZoom?.SelectAllText();
 
     [RelayCommand]
     private void SaveImage()
@@ -599,6 +630,7 @@ public partial class ImageTranslateWindowViewModel : ObservableObject, IDisposab
                 break;
             case nameof(Settings.IsImTranShowingAnnotated):
                 DisplayImage = Settings.IsImTranShowingAnnotated ? _annotatedImage : _resultImage;
+                RefreshSelectableOcrWords();
                 break;
         }
     }
@@ -612,10 +644,21 @@ public partial class ImageTranslateWindowViewModel : ObservableObject, IDisposab
         Result = string.Empty;
         _sourceImage = null;
         _annotatedImage = null;
+        _resultImage = null;
         DisplayImage = null;
         _lastOcrResult = null;
         IsShowingFitToWindow = false;
         IsNoLocationInfoVisible = false;
+        _originalSelectionWords = [];
+        _translatedSelectionWords = [];
+        OcrWords = [];
+    }
+
+    private void RefreshSelectableOcrWords()
+    {
+        OcrWords = Settings.IsImTranShowingAnnotated || _resultImage == null
+            ? _originalSelectionWords
+            : _translatedSelectionWords;
     }
 
     #endregion
@@ -636,6 +679,7 @@ public partial class ImageTranslateWindowViewModel : ObservableObject, IDisposab
         if (layoutBlocks.Count == 0 ||
             layoutBlocks.All(x => x.BoxPoints.Count == 0))
         {
+            _translatedSelectionWords = [];
             return image;
         }
 
@@ -663,6 +707,25 @@ public partial class ImageTranslateWindowViewModel : ObservableObject, IDisposab
         int renderWidth = (int)(image.PixelWidth * scaleFactor);
         int renderHeight = (int)(image.PixelHeight * scaleFactor);
 
+        var overlayTheme = GetOverlayTheme();
+        var measureTextBrush = new SolidColorBrush(Colors.Black);
+        measureTextBrush.Freeze();
+        var overlays = layoutBlocks
+            .Where(item => item.BoxPoints.Count > 0 && !string.IsNullOrEmpty(item.Text))
+            .Select(item => CreateTranslatedTextOverlay(item, overlayTheme, pixelsPerDip, measureTextBrush))
+            .Where(item => item != null)
+            .Select(item => item!)
+            .ToList();
+
+        _translatedSelectionWords = OcrWordBuilder.CreateIndexedCollection(
+            overlays.SelectMany(overlay =>
+                OcrWordBuilder.CreateFromFormattedText(
+                    overlay.Text,
+                    overlay.FormattedText,
+                    overlay.TextPosition,
+                    overlay.Plan.TextClipRect,
+                    scaleFactor)));
+
         var drawingVisual = new DrawingVisual();
 
         using (var drawingContext = drawingVisual.RenderOpen())
@@ -675,16 +738,6 @@ public partial class ImageTranslateWindowViewModel : ObservableObject, IDisposab
 
             // 绘制原始图像
             drawingContext.DrawImage(image, new Rect(0, 0, image.PixelWidth, image.PixelHeight));
-
-            var overlayTheme = GetOverlayTheme();
-            var measureTextBrush = new SolidColorBrush(Colors.Black);
-            measureTextBrush.Freeze();
-            var overlays = layoutBlocks
-                .Where(item => item.BoxPoints.Count > 0 && !string.IsNullOrEmpty(item.Text))
-                .Select(item => CreateTranslatedTextOverlay(item, overlayTheme, pixelsPerDip, measureTextBrush))
-                .Where(item => item != null)
-                .Select(item => item!)
-                .ToList();
 
             // 先统一绘制覆盖背景，再绘制译文，避免后续背景覆盖前面已经画好的译文。
             foreach (var overlay in overlays)
@@ -784,7 +837,7 @@ public partial class ImageTranslateWindowViewModel : ObservableObject, IDisposab
                 : plan.TextClipRect.Top + Math.Max(0, (plan.TextClipRect.Height - formattedText.Height) / 2)
         );
 
-        return new TranslatedTextOverlay(plan, shadowText, formattedText, textPosition);
+        return new TranslatedTextOverlay(content.Text, plan, shadowText, formattedText, textPosition);
     }
 
     private static void DrawTranslatedTextOverlay(DrawingContext drawingContext, TranslatedTextOverlay overlay)
@@ -859,6 +912,7 @@ public partial class ImageTranslateWindowViewModel : ObservableObject, IDisposab
     }
 
     private sealed record TranslatedTextOverlay(
+        string Text,
         ImageTranslateTextOverlayPlan Plan,
         FormattedText ShadowText,
         FormattedText FormattedText,

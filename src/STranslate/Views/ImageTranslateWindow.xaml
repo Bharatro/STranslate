@@ -118,15 +118,55 @@
                             x:Name="PART_ImageZoom"
                             MaxZoomRatio="5.0"
                             MinZoomRatio="0.1"
+                            OcrWords="{Binding OcrWords}"
                             Source="{Binding DisplayImage}">
+                            <control:ImageZoom.InputBindings>
+                                <KeyBinding
+                                    Key="A"
+                                    Command="{Binding SelectAllTextCommand}"
+                                    CommandParameter="{Binding ElementName=PART_ImageZoom}"
+                                    Modifiers="Ctrl" />
+                                <KeyBinding
+                                    Key="C"
+                                    Command="{Binding CopyImageCommand}"
+                                    CommandParameter="{Binding ElementName=PART_ImageZoom}"
+                                    Modifiers="Ctrl" />
+                            </control:ImageZoom.InputBindings>
                             <control:ImageZoom.Resources>
                                 <s:BindingProxy x:Key="ViewModelProxy" Data="{Binding}" />
+                                <s:BindingProxy x:Key="ImageZoomProxy" Data="{Binding ElementName=PART_ImageZoom}" />
                             </control:ImageZoom.Resources>
                             <control:ImageZoom.ContextMenu>
                                 <ContextMenu>
-                                    <MenuItem Command="{Binding Source={StaticResource ViewModelProxy}, Path=Data.CopyImageCommand}" Header="{DynamicResource Copy}">
+                                    <MenuItem
+                                        Command="{Binding Source={StaticResource ViewModelProxy}, Path=Data.CopyImageCommand}"
+                                        CommandParameter="{Binding Source={StaticResource ImageZoomProxy}, Path=Data}"
+                                        Header="{DynamicResource Copy}">
+                                        <MenuItem.Style>
+                                            <Style BasedOn="{StaticResource {x:Type MenuItem}}" TargetType="MenuItem">
+                                                <Setter Property="Icon">
+                                                    <Setter.Value>
+                                                        <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Copy_20_Regular}" />
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Source={StaticResource ImageZoomProxy}, Path=Data.SelectedText, Converter={cnvt:StringToBoolConverter}}" Value="True">
+                                                        <Setter Property="Icon">
+                                                            <Setter.Value>
+                                                                <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.ImageCopy_20_Regular}" />
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </MenuItem.Style>
+                                    </MenuItem>
+                                    <MenuItem
+                                        Command="{Binding Source={StaticResource ViewModelProxy}, Path=Data.SelectAllTextCommand}"
+                                        CommandParameter="{Binding Source={StaticResource ImageZoomProxy}, Path=Data}"
+                                        Header="{DynamicResource SelectAll}">
                                         <MenuItem.Icon>
-                                            <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.ImageCopy_20_Regular}" />
+                                            <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.SelectAllOn_20_Regular}" />
                                         </MenuItem.Icon>
                                     </MenuItem>
                                     <Separator />
