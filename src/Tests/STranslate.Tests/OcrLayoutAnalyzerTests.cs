@@ -89,6 +89,149 @@ public class OcrLayoutAnalyzerTests
     }
 
     [Fact]
+    public void SmartKeepsPowerToysStyleGridItemsSeparate()
+    {
+        var result = AnalyzeSmart(
+            Box("Advanced Paste", 0, 0, 190, 28),
+            Box("Always on Top", 320, 0, 190, 28),
+            Box("Awake", 760, 0, 95, 28),
+            Box("Color Picker", 0, 44, 165, 28),
+            Box("Command Not Found", 320, 44, 260, 28),
+            Box("Command Palette", 760, 44, 230, 28),
+            Box("Crop And Lock", 0, 88, 185, 28),
+            Box("Environment Variables", 320, 88, 285, 28),
+            Box("FancyZones", 760, 88, 160, 28),
+            Box("File Explorer Add-ons", 0, 132, 270, 28),
+            Box("File Locksmith", 320, 132, 190, 28),
+            Box("Grab And Move", 760, 132, 210, 28),
+            Box("Hosts File Editor", 0, 176, 210, 28),
+            Box("Image Resizer", 320, 176, 180, 28),
+            Box("Keyboard Manager", 760, 176, 230, 28),
+            Box("Light Switch", 0, 220, 155, 28),
+            Box("Mouse Utilities", 320, 220, 205, 28),
+            Box("Mouse Without Borders", 760, 220, 285, 28));
+
+        var texts = result.Select(x => x.Text).ToList();
+        var expected = new[]
+        {
+            "Advanced Paste",
+            "Always on Top",
+            "Awake",
+            "Color Picker",
+            "Command Not Found",
+            "Command Palette",
+            "Crop And Lock",
+            "Environment Variables",
+            "FancyZones",
+            "File Explorer Add-ons",
+            "File Locksmith",
+            "Grab And Move",
+            "Hosts File Editor",
+            "Image Resizer",
+            "Keyboard Manager",
+            "Light Switch",
+            "Mouse Utilities",
+            "Mouse Without Borders"
+        };
+
+        Assert.Equal(expected.Length, texts.Count);
+        Assert.All(expected, text => Assert.Contains(text, texts));
+        Assert.DoesNotContain(texts, text => text.Contains("File Explorer Add-ons File Locksmith"));
+        Assert.DoesNotContain(texts, text => text.Contains("File Explorer Add-ons Hosts File Editor Light Switch"));
+        Assert.DoesNotContain(texts, text => text.Contains("Grab And Move Keyboard Manager"));
+    }
+
+    [Fact]
+    public void SmartKeepsTableRowFragmentsTogetherWithoutMergingRows()
+    {
+        var result = AnalyzeSmart(
+            Box("File", 0, 0, 34, 24),
+            Box("Explorer Add-ons", 42, 0, 162, 24),
+            Box("Mouse", 300, 0, 64, 24),
+            Box("Without Borders", 372, 0, 170, 24),
+            Box("Command", 600, 0, 106, 24),
+            Box("Palette", 714, 0, 80, 24),
+            Box("Hosts", 0, 40, 58, 24),
+            Box("File Editor", 66, 40, 104, 24),
+            Box("Image", 300, 40, 66, 24),
+            Box("Resizer", 374, 40, 76, 24),
+            Box("PowerToys", 600, 40, 118, 24),
+            Box("Run", 726, 40, 42, 24),
+            Box("Light", 0, 80, 54, 24),
+            Box("Switch", 62, 80, 68, 24),
+            Box("Screen", 300, 80, 74, 24),
+            Box("Ruler", 382, 80, 58, 24),
+            Box("Quick", 600, 80, 62, 24),
+            Box("Accent", 670, 80, 76, 24));
+
+        Assert.Equal(9, result.Count);
+        Assert.Contains(result, block => block.Text == "File Explorer Add-ons");
+        Assert.Contains(result, block => block.Text == "Mouse Without Borders");
+        Assert.Contains(result, block => block.Text == "Command Palette");
+        Assert.DoesNotContain(result, block => block.Text.Contains("File Explorer Add-ons Hosts File Editor Light Switch"));
+    }
+
+    [Fact]
+    public void SmartKeepsTableLeadingIconsWithText()
+    {
+        var result = AnalyzeSmart(
+            Box("*", 0, 0, 20, 24),
+            Box("Advanced Paste", 44, 0, 154, 24),
+            Box("*", 300, 0, 20, 24),
+            Box("Always on Top", 344, 0, 148, 24),
+            Box("*", 0, 40, 20, 24),
+            Box("Color Picker", 44, 40, 128, 24),
+            Box("*", 300, 40, 20, 24),
+            Box("Command Palette", 344, 40, 184, 24),
+            Box("*", 0, 80, 20, 24),
+            Box("File Explorer Add-ons", 44, 80, 212, 24),
+            Box("*", 300, 80, 20, 24),
+            Box("File Locksmith", 344, 80, 144, 24));
+
+        Assert.Equal(6, result.Count);
+        Assert.Contains(result, block => block.Text == "*Advanced Paste");
+        Assert.Contains(result, block => block.Text == "*Always on Top");
+        Assert.Contains(result, block => block.Text == "*File Explorer Add-ons");
+        Assert.DoesNotContain(result, block => block.Text == "*");
+    }
+
+    [Fact]
+    public void SmartKeepsThreeLineMultiColumnBodyMerged()
+    {
+        var result = AnalyzeSmart(
+            Box("Left column starts here", 0, 0, 210, 20),
+            Box("Right column starts here", 330, 0, 220, 20),
+            Box("and continues below", 0, 24, 180, 20),
+            Box("with its own text", 330, 24, 170, 20),
+            Box("before ending normally", 0, 48, 210, 20),
+            Box("over multiple lines", 330, 48, 180, 20));
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal("Left column starts here and continues below before ending normally", result[0].Text);
+        Assert.Equal("Right column starts here with its own text over multiple lines", result[1].Text);
+    }
+
+    [Fact]
+    public void SmartKeepsThreeColumnBodyMerged()
+    {
+        var result = AnalyzeSmart(
+            Box("Column one starts here", 0, 0, 205, 20),
+            Box("Column two starts here", 300, 0, 205, 20),
+            Box("Column three starts here", 600, 0, 225, 20),
+            Box("and carries the thought", 0, 24, 210, 20),
+            Box("with the next sentence", 300, 24, 210, 20),
+            Box("through another line", 600, 24, 185, 20),
+            Box("before ending normally", 0, 48, 210, 20),
+            Box("inside the same column", 300, 48, 215, 20),
+            Box("without table spacing", 600, 48, 195, 20));
+
+        Assert.Equal(3, result.Count);
+        Assert.Equal("Column one starts here and carries the thought before ending normally", result[0].Text);
+        Assert.Equal("Column two starts here with the next sentence inside the same column", result[1].Text);
+        Assert.Equal("Column three starts here through another line without table spacing", result[2].Text);
+    }
+
+    [Fact]
     public void SmartKeepsTitleAndBodySeparate()
     {
         var result = AnalyzeSmart(

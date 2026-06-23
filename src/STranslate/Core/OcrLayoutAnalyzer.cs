@@ -71,11 +71,12 @@ internal static class OcrLayoutAnalyzer
     private static List<OcrLayoutBlock> AnalyzeRegion(LayoutRegion region, LayoutMetrics metrics)
     {
         var regionMetrics = metrics.WithNormalLineGapFrom(region.Lines);
+        var tableContext = TableLikeRegion.From(region.Lines, regionMetrics);
         var paragraphs = new List<ParagraphGroup>();
 
         foreach (var line in region.Lines.OrderBy(x => x.Bounds.Top).ThenBy(x => x.Bounds.Left))
         {
-            var target = FindBestParagraph(line, paragraphs, regionMetrics);
+            var target = FindBestParagraph(line, paragraphs, regionMetrics, tableContext);
             if (target == null)
                 paragraphs.Add(new ParagraphGroup(line));
             else
@@ -293,7 +294,8 @@ internal static class OcrLayoutAnalyzer
     private static ParagraphCandidate? FindBestParagraph(
         LineSegment line,
         List<ParagraphGroup> paragraphs,
-        LayoutMetrics metrics)
+        LayoutMetrics metrics,
+        TableLikeRegion tableContext)
     {
         ParagraphCandidate? bestCandidate = null;
         var bestScore = double.NegativeInfinity;
@@ -302,6 +304,9 @@ internal static class OcrLayoutAnalyzer
         {
             var lastLine = paragraph.LastLine;
             if (line.Bounds.Top < lastLine.Bounds.Top)
+                continue;
+
+            if (tableContext.ShouldKeepSeparate(lastLine, line))
                 continue;
 
             if (!CanAppendToParagraph(lastLine, line, metrics, out var confidence))
@@ -435,14 +440,15 @@ internal static class OcrLayoutAnalyzer
                 line.Add(item);
         }
 
+        var tableContext = TableVisualLineContext.From(visualLines);
         return visualLines
-            .SelectMany(SplitVisualLine)
+            .SelectMany(line => SplitVisualLine(line, tableContext))
             .OrderBy(x => x.Bounds.Top)
             .ThenBy(x => x.Bounds.Left)
             .ToList();
     }
 
-    private static IEnumerable<LineSegment> SplitVisualLine(VisualLine line)
+    private static IEnumerable<LineSegment> SplitVisualLine(VisualLine line, TableVisualLineContext tableContext)
     {
         var sortedItems = line.Items.OrderBy(x => x.Bounds.Left).ToList();
         var groups = new List<List<LayoutItem>>();
@@ -459,7 +465,7 @@ internal static class OcrLayoutAnalyzer
                     lineHeight * 1.25,
                     Math.Min(lineHeight * 2.0, Math.Min(previous.Bounds.Width, item.Bounds.Width) * 0.75));
 
-                if (gap > maxInlineGap)
+                if (gap > maxInlineGap || tableContext.ShouldSplitAtColumnBoundary(group, item, lineHeight))
                 {
                     groups.Add(group);
                     group = [];
@@ -622,11 +628,34 @@ internal static class OcrLayoutAnalyzer
         if (!line.HasRowPeers || IsListStart(line.Text) || HasSentenceEnding(line.Text))
             return false;
 
-        var wordCount = line.Text.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+        var wordCount = CountWords(line.Text);
         return wordCount <= 3 &&
                line.Text.Length <= 32 &&
                line.Bounds.Width <= metrics.LineHeight * 7;
     }
+
+    private static bool LooksLikeTableItem(LineSegment line, LayoutMetrics metrics, int inferredColumnCount)
+    {
+        if (!line.HasRowPeers || IsListStart(line.Text) || HasSentenceEnding(line.Text))
+            return false;
+
+        var wordCount = CountWords(line.Text);
+        var widthRatio = line.Bounds.Width / Math.Max(metrics.LineHeight, 1);
+
+        if (inferredColumnCount >= 3)
+        {
+            return wordCount <= 6 &&
+                   line.Text.Length <= 72 &&
+                   widthRatio <= 18;
+        }
+
+        return wordCount <= 3 &&
+               line.Text.Length <= 48 &&
+               widthRatio <= 12;
+    }
+
+    private static int CountWords(string text) =>
+        text.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
 
     private static bool IsListStart(string text)
     {
@@ -748,6 +777,250 @@ internal static class OcrLayoutAnalyzer
         {
             Lines.Add(line);
             Bounds = Bounds.Union(Bounds, line.Bounds);
+        }
+    }
+
+    private sealed class TableVisualLineContext
+    {
+        private static readonly TableVisualLineContext Empty = new(false, []);
+
+        private readonly List<PositionCluster> _columnStarts;
+
+        private TableVisualLineContext(bool isTableLike, List<PositionCluster> columnStarts)
+        {
+            IsTableLike = isTableLike;
+            _columnStarts = columnStarts;
+        }
+
+        internal bool IsTableLike { get; }
+
+        internal bool ShouldSplitAtColumnBoundary(IReadOnlyList<LayoutItem> group, LayoutItem item, double lineHeight)
+        {
+            if (!IsTableLike || group.Count == 0)
+                return false;
+
+            var groupBounds = Bounds.Union(group.Select(x => x.Bounds));
+            var gap = item.Bounds.Left - groupBounds.Right;
+            if (gap < lineHeight * 0.75)
+                return false;
+
+            if (LooksLikeLeadingAdornment(groupBounds, lineHeight))
+                return false;
+
+            return IsRecurringColumnStart(item.Bounds.Left, lineHeight);
+        }
+
+        internal static TableVisualLineContext From(IReadOnlyList<VisualLine> lines)
+        {
+            if (lines.Count < 3)
+                return Empty;
+
+            var lineHeight = Math.Max(1, Median(lines.SelectMany(x => x.Items.Select(item => item.Bounds.Height))));
+            var peerRows = lines.Where(x => x.Items.Count >= 2).ToList();
+            if (peerRows.Count < 3 || !HasTableRowSpacing(lines, lineHeight))
+                return Empty;
+
+            var tolerance = Math.Max(lineHeight * 1.4, 1);
+            var columnStarts = BuildPositionClusters(
+                    peerRows.SelectMany(row => row.Items.Select(item => item.Bounds.Left)),
+                    tolerance)
+                .Where(x => x.Count >= 3)
+                .OrderBy(x => x.Center)
+                .ToList();
+
+            if (columnStarts.Count < 2)
+                return Empty;
+
+            var startSpan = columnStarts[^1].Center - columnStarts[0].Center;
+            if (startSpan < lineHeight * 6)
+                return Empty;
+
+            return new(true, columnStarts);
+        }
+
+        private bool IsRecurringColumnStart(double left, double lineHeight)
+        {
+            var tolerance = Math.Max(lineHeight * 1.4, 1);
+            return _columnStarts.Any(x => Math.Abs(x.Center - left) <= tolerance);
+        }
+
+        private static bool HasTableRowSpacing(IReadOnlyList<VisualLine> lines, double lineHeight)
+        {
+            var sortedRows = lines.OrderBy(x => x.Bounds.Top).ToList();
+            var gaps = new List<double>();
+
+            for (var i = 1; i < sortedRows.Count; i++)
+                gaps.Add(VerticalGap(sortedRows[i - 1].Bounds, sortedRows[i].Bounds));
+
+            return gaps.Count > 0 && Median(gaps) >= lineHeight * 0.32;
+        }
+
+        private static bool LooksLikeLeadingAdornment(Bounds bounds, double lineHeight) =>
+            bounds.Width <= lineHeight * 1.25 && bounds.Height <= lineHeight * 1.35;
+    }
+
+    private sealed class TableLikeRegion
+    {
+        private static readonly TableLikeRegion Empty = new(false, []);
+
+        private readonly HashSet<LineSegment> _itemLines;
+
+        private TableLikeRegion(bool isTableLike, HashSet<LineSegment> itemLines)
+        {
+            IsTableLike = isTableLike;
+            _itemLines = itemLines;
+        }
+
+        internal bool IsTableLike { get; }
+
+        internal bool ShouldKeepSeparate(LineSegment previous, LineSegment current) =>
+            IsTableLike && _itemLines.Contains(previous) && _itemLines.Contains(current);
+
+        internal static TableLikeRegion From(IReadOnlyList<LineSegment> lines, LayoutMetrics metrics)
+        {
+            if (lines.Count < 3)
+                return Empty;
+
+            var rows = BuildRows(lines, metrics);
+            if (rows.Count < 3)
+                return Empty;
+
+            if (!HasTableRowSpacing(rows, metrics))
+                return Empty;
+
+            var inferredColumnCount = lines
+                .Where(x => x.HasRowPeers)
+                .Select(x => x.VisualLineSegmentCount)
+                .DefaultIfEmpty(1)
+                .Max();
+            if (inferredColumnCount < 2)
+                return Empty;
+
+            var itemLines = lines
+                .Where(line => LooksLikeTableItem(line, metrics, inferredColumnCount))
+                .ToHashSet();
+            if (itemLines.Count < 3)
+                return Empty;
+
+            var peerRowCount = rows.Count(row => row.Lines.Any(line => line.HasRowPeers));
+            var itemRowCount = rows.Count(row => row.Lines.Any(itemLines.Contains));
+            if (peerRowCount < 3 || itemRowCount < 3)
+                return Empty;
+
+            if (!HasRecurringColumnAlignment(itemLines, metrics))
+                return Empty;
+
+            return new(true, itemLines);
+        }
+
+        private static List<TableRow> BuildRows(IReadOnlyList<LineSegment> lines, LayoutMetrics metrics)
+        {
+            var rows = new List<TableRow>();
+
+            foreach (var line in lines.OrderBy(x => x.Bounds.CenterY).ThenBy(x => x.Bounds.Left))
+            {
+                var row = rows
+                    .Where(x => IsSameTableRow(x.Bounds, line.Bounds, metrics))
+                    .OrderByDescending(x => VerticalOverlapRatio(x.Bounds, line.Bounds))
+                    .ThenBy(x => Math.Abs(x.Bounds.CenterY - line.Bounds.CenterY))
+                    .FirstOrDefault();
+
+                if (row == null)
+                    rows.Add(new TableRow(line));
+                else
+                    row.Add(line);
+            }
+
+            return rows;
+        }
+
+        private static bool IsSameTableRow(Bounds rowBounds, Bounds lineBounds, LayoutMetrics metrics)
+        {
+            if (VerticalOverlapRatio(rowBounds, lineBounds) >= 0.35)
+                return true;
+
+            return Math.Abs(rowBounds.CenterY - lineBounds.CenterY) <= metrics.LineHeight * 0.55;
+        }
+
+        private static bool HasTableRowSpacing(IReadOnlyList<TableRow> rows, LayoutMetrics metrics)
+        {
+            var sortedRows = rows.OrderBy(x => x.Bounds.Top).ToList();
+            var gaps = new List<double>();
+
+            for (var i = 1; i < sortedRows.Count; i++)
+                gaps.Add(VerticalGap(sortedRows[i - 1].Bounds, sortedRows[i].Bounds));
+
+            return gaps.Count > 0 && Median(gaps) >= metrics.LineHeight * 0.32;
+        }
+
+        private static bool HasRecurringColumnAlignment(HashSet<LineSegment> lines, LayoutMetrics metrics)
+        {
+            var tolerance = Math.Max(metrics.LineHeight * 1.4, 1);
+            return CountRecurringClusters(lines.Select(x => x.Bounds.Left), tolerance) > 0 ||
+                   CountRecurringClusters(lines.Select(x => x.Bounds.CenterX), tolerance) > 0;
+        }
+
+        private static int CountRecurringClusters(IEnumerable<double> positions, double tolerance)
+        {
+            return BuildPositionClusters(positions, tolerance).Count(x => x.Count >= 3);
+        }
+    }
+
+    private static List<PositionCluster> BuildPositionClusters(IEnumerable<double> positions, double tolerance)
+    {
+        var clusters = new List<PositionCluster>();
+
+        foreach (var position in positions.Order())
+        {
+            var cluster = clusters
+                .Where(x => Math.Abs(x.Center - position) <= tolerance)
+                .OrderBy(x => Math.Abs(x.Center - position))
+                .FirstOrDefault();
+
+            if (cluster == null)
+                clusters.Add(new PositionCluster(position));
+            else
+                cluster.Add(position);
+        }
+
+        return clusters;
+    }
+
+    private sealed class TableRow
+    {
+        internal TableRow(LineSegment line)
+        {
+            Lines.Add(line);
+            Bounds = line.Bounds;
+        }
+
+        internal List<LineSegment> Lines { get; } = [];
+
+        internal Bounds Bounds { get; private set; }
+
+        internal void Add(LineSegment line)
+        {
+            Lines.Add(line);
+            Bounds = Bounds.Union(Bounds, line.Bounds);
+        }
+    }
+
+    private sealed class PositionCluster
+    {
+        internal PositionCluster(double position)
+        {
+            Center = position;
+            Count = 1;
+        }
+
+        internal double Center { get; private set; }
+
+        internal int Count { get; private set; }
+
+        internal void Add(double position)
+        {
+            Center = (Center * Count + position) / (Count + 1);
+            Count++;
         }
     }
 
