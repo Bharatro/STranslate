@@ -19,7 +19,8 @@ public partial class ImageTranslateCompactWindow
     private const double FallbackMinWidth = 320;
     private const double FallbackMinHeight = 180;
     private const double ToolbarReservedHeight = 64;
-    private const double ToolbarWidth = 300;
+    // 按钮条宽度初值，仅用于首次 Measure 兜底；实际宽度在 PlaceOnPhysicalBounds 中实测。
+    private const double ToolbarWidthFallback = 270;
     private const double GapH = 8;
     private const double GapV = 6;
     private const double WindowMargin = 8;
@@ -88,6 +89,9 @@ public partial class ImageTranslateCompactWindow
             bounds.Left + bounds.Width / 2,
             bounds.Top + bounds.Height / 2);
 
+        // 实测按钮条所需宽度（DIP），避免常量估算偏差导致居中错位
+        var toolbarWidthDip = MeasureToolbarWidthDip();
+
         _layout = ImageTranslateCompactWindowPlacement.CreateLayout(
             imageBounds: bounds,
             workArea: workArea,
@@ -95,7 +99,7 @@ public partial class ImageTranslateCompactWindow
             dpiScaleY: dpiScale.DpiScaleY,
             minWidthDip: MinWidth,
             minImageHeightDip: MinHeight,
-            toolbarWidthDip: ToolbarWidth,
+            toolbarWidthDip: toolbarWidthDip,
             toolbarHeightDip: ToolbarReservedHeight,
             gapHDip: GapH,
             gapVDip: GapV,
@@ -103,6 +107,17 @@ public partial class ImageTranslateCompactWindow
 
         PlaceOnPhysicalWindowBounds(_layout.WindowBounds, dpiScale);
         ApplyLayoutToVisualTree();
+    }
+
+    /// <summary>
+    /// 实测按钮条 Border 所需 DIP 宽度。Measure 后取 DesiredSize.Width，
+    /// 兜底用 ToolbarWidthFallback 常量。
+    /// </summary>
+    private double MeasureToolbarWidthDip()
+    {
+        PART_ToolbarBorder.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
+        var width = PART_ToolbarBorder.DesiredSize.Width;
+        return width > 0 ? width : ToolbarWidthFallback;
     }
 
     /// <summary>
@@ -184,9 +199,10 @@ public partial class ImageTranslateCompactWindow
     }
 
     /// <summary>
-    /// 把布局结果换算成 DIP 并应用到 ImageZoom 与按钮条 Border：
+    /// 把布局结果换算成 DIP 并应用到 ImageZoom、按钮条 Border 与执行遮罩：
     /// 固定 Width/Height 保证图片 1:1 显示，左上对齐 + Margin 把图片钉在选区绝对位置、
     /// 按钮条钉到布局算法算出的位置。按钮条 ZIndex 高于图片（XAML 内 PART_ToolbarBorder Panel.ZIndex=20）。
+    /// 执行遮罩只覆盖图片区域（透明窗口下避免遮罩铺满整窗造成背景闪烁）。
     /// </summary>
     private void ApplyLayoutToVisualTree()
     {
@@ -195,12 +211,16 @@ public partial class ImageTranslateCompactWindow
         var sx = dpi.DpiScaleX;
         var sy = dpi.DpiScaleY;
 
+        var imageWidthDip = _layout.ImageWidth / sx;
+        var imageHeightDip = _layout.ImageHeight / sy;
+        var imageMargin = new Thickness(_layout.ImageOffsetX / sx, _layout.ImageOffsetY / sy, 0, 0);
+
         // 图片：固定尺寸 + 左上对齐 + Margin 偏移（钉在选区绝对位置）
         PART_ImageZoom.HorizontalAlignment = HorizontalAlignment.Left;
         PART_ImageZoom.VerticalAlignment = VerticalAlignment.Top;
-        PART_ImageZoom.Width = _layout.ImageWidth / sx;
-        PART_ImageZoom.Height = _layout.ImageHeight / sy;
-        PART_ImageZoom.Margin = new Thickness(_layout.ImageOffsetX / sx, _layout.ImageOffsetY / sy, 0, 0);
+        PART_ImageZoom.Width = imageWidthDip;
+        PART_ImageZoom.Height = imageHeightDip;
+        PART_ImageZoom.Margin = imageMargin;
 
         // 按钮条：固定尺寸 + 左上对齐 + Margin 偏移，ZIndex 高于图片
         PART_ToolbarBorder.HorizontalAlignment = HorizontalAlignment.Left;
@@ -208,6 +228,13 @@ public partial class ImageTranslateCompactWindow
         PART_ToolbarBorder.Width = _layout.ToolbarWidth / sx;
         PART_ToolbarBorder.Height = _layout.ToolbarHeight / sy;
         PART_ToolbarBorder.Margin = new Thickness(_layout.ToolbarX / sx, _layout.ToolbarY / sy, 0, 0);
+
+        // 执行遮罩：只覆盖图片区域，与图片同尺寸同位置，避免铺满透明窗口造成背景闪烁
+        PART_ExecutingOverlay.HorizontalAlignment = HorizontalAlignment.Left;
+        PART_ExecutingOverlay.VerticalAlignment = VerticalAlignment.Top;
+        PART_ExecutingOverlay.Width = imageWidthDip;
+        PART_ExecutingOverlay.Height = imageHeightDip;
+        PART_ExecutingOverlay.Margin = imageMargin;
     }
 
     private static System.Windows.DpiScale GetDpiScale(DrawingRectangle bounds) =>

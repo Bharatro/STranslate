@@ -185,9 +185,11 @@
         </Border>
 
         <Border
+            x:Name="PART_ExecutingOverlay"
             d:Visibility="Collapsed"
             Background="#B0000000"
             IsHitTestVisible="{Binding IsExecuting}"
+            Panel.ZIndex="30"
             Visibility="{Binding IsExecuting, Converter={cnvt:BoolToVisibilityConverter}}">
             <StackPanel
                 HorizontalAlignment="Center"
