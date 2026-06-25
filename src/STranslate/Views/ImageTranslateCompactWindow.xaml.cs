@@ -87,7 +87,7 @@ public partial class ImageTranslateCompactWindow
             MinHeight,
             ToolbarReservedHeight);
 
-        PlaceOnPhysicalWindowBounds(windowBounds);
+        PlaceOnPhysicalWindowBounds(windowBounds, dpiScale);
     }
 
     private void PlaceNearCursorScreen(DrawingSize bitmapSize)
@@ -143,11 +143,25 @@ public partial class ImageTranslateCompactWindow
             FallbackScreenWidthRatio,
             FallbackScreenHeightRatio);
 
-        PlaceOnPhysicalWindowBounds(windowBounds);
+        PlaceOnPhysicalWindowBounds(windowBounds, dpiScale);
     }
 
-    private void PlaceOnPhysicalWindowBounds(DrawingRectangle bounds) =>
+    /// <summary>
+    /// 两步定位(对齐 ScreenGrab 的做法):
+    /// 1. 先用 DIP 写回 WPF 的 Left/Top/Width/Height,让布局系统认这个逻辑位置;
+    /// 2. 再用 SetWindowPos 以物理像素精确校正 HWND。
+    /// 只做第 2 步会导致 WPF 布局周期把窗口拉回逻辑坐标对应位置,在非 100% 缩放下产生偏移。
+    /// </summary>
+    private void PlaceOnPhysicalWindowBounds(DrawingRectangle bounds, System.Windows.DpiScale dpiScale)
+    {
+        var dipBounds = ImageTranslateCompactWindowPlacement.ToDipBounds(bounds, dpiScale.DpiScaleX, dpiScale.DpiScaleY);
+        Left = dipBounds.Left;
+        Top = dipBounds.Top;
+        Width = dipBounds.Width;
+        Height = dipBounds.Height;
+
         Win32Helper.SetWindowPhysicalBounds(this, bounds.Left, bounds.Top, bounds.Width, bounds.Height);
+    }
 
     private static System.Windows.DpiScale GetDpiScale(DrawingRectangle bounds) =>
         Win32Helper.GetDpiScaleForPhysicalPoint(

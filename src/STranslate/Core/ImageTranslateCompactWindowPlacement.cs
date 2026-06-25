@@ -1,4 +1,7 @@
 using System.Drawing;
+using System.Windows;
+
+using WpfRect = System.Windows.Rect;
 
 namespace STranslate.Core;
 
@@ -21,7 +24,7 @@ internal static class ImageTranslateCompactWindowPlacement
 
     internal static Rectangle CreateCenteredOnWorkArea(
         Rectangle workArea,
-        Size bitmapSize,
+        System.Drawing.Size bitmapSize,
         double dpiScaleX,
         double dpiScaleY,
         double minWidthDip,
@@ -43,6 +46,17 @@ internal static class ImageTranslateCompactWindowPlacement
 
         return new Rectangle(left, top, width, height);
     }
+
+    /// <summary>
+    /// 将物理像素矩形换算为 WPF 逻辑像素(DIP)矩形，供同步 WPF 的 Left/Top/Width/Height 使用。
+    /// 对齐 ScreenGrab 的 ScaledBounds：物理坐标 ÷ DPI 缩放。
+    /// </summary>
+    internal static WpfRect ToDipBounds(Rectangle physicalBounds, double dpiScaleX, double dpiScaleY) =>
+        new(
+            physicalBounds.Left / dpiScaleX,
+            physicalBounds.Top / dpiScaleY,
+            Math.Max(1d, physicalBounds.Width / dpiScaleX),
+            Math.Max(1d, physicalBounds.Height / dpiScaleY));
 
     private static int ToPhysicalPixels(double dip, double dpiScale) =>
         Math.Max(1, (int)Math.Round(dip * dpiScale));

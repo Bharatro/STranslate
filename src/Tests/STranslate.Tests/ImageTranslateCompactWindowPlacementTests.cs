@@ -1,5 +1,6 @@
 using STranslate.Core;
 using System.Drawing;
+using WpfRect = System.Windows.Rect;
 
 namespace STranslate.Tests;
 
@@ -48,5 +49,27 @@ public class ImageTranslateCompactWindowPlacementTests
             maxHeightRatio: 0.85);
 
         Assert.Equal(new Rectangle(175, 110, 850, 680), actual);
+    }
+
+    [Fact]
+    public void ToDipBoundsScalesPhysicalPixelsByDpi()
+    {
+        var actual = ImageTranslateCompactWindowPlacement.ToDipBounds(
+            new Rectangle(-120, 80, 640, 440),
+            dpiScaleX: 1.25,
+            dpiScaleY: 1.25);
+
+        Assert.Equal(new WpfRect(-96, 64, 512, 352), actual);
+    }
+
+    [Fact]
+    public void ToDipBoundsClampsTinySizeToOneDip()
+    {
+        var actual = ImageTranslateCompactWindowPlacement.ToDipBounds(
+            new Rectangle(10, 20, 0, 0),
+            dpiScaleX: 2,
+            dpiScaleY: 1.5);
+
+        Assert.Equal(new WpfRect(5, 13.333333333333334, 1, 1), actual);
     }
 }
