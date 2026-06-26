@@ -1542,6 +1542,11 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     {
         Show();
         IsTopmost = true;
+
+        // 增量翻译触发时清空原本内容（默认开启），false 时保留旧逻辑不清空
+        if (Settings.IncrementalClearInput)
+            InputText = string.Empty;
+
         UpdateCacheText();
 
         _ = MouseKeyHelper.StartMouseTextSelectionAsync(() => Settings.SelectedTextFetchTimeoutMs);

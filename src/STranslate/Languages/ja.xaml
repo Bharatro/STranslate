@@ -66,6 +66,8 @@
     <sys:String x:Key="General_AutoTranslateButtonVisible">メイン画面に自動翻訳ボタンを表示</sys:String>
     <sys:String x:Key="General_AutoTranslateOnPromptChanged">プロンプト切替後に自動翻訳</sys:String>
     <sys:String x:Key="General_AutoTranslateOnPromptChangedDescription">AI翻訳サービスのプロンプトを切り替えた直後に、翻訳を再実行します。</sys:String>
+    <sys:String x:Key="General_IncrementalClearInput">增量翻訳時に入力をクリア</sys:String>
+    <sys:String x:Key="General_IncrementalClearInputDescription">有効時（既定）は增量翻訳のトリガー時に入力ボックスをクリアし、セッション内の選択テキストは引き続き追加されます。無効時は旧ロジックを維持し、既存内容をクリアせずそのまま追加します。</sys:String>
     <sys:String x:Key="General_AutoTranslateDelay">自動翻訳の遅延</sys:String>
     <sys:String x:Key="General_AutoTranslateDelayDescription">入力後の待機時間。単位：ミリ秒。</sys:String>
     <sys:String x:Key="General_LineBreakHandleType">改行処理</sys:String>

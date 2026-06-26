@@ -69,6 +69,8 @@
     <sys:String x:Key="General_AutoTranslateButtonVisible">Show automatic translation button on main interface</sys:String>
     <sys:String x:Key="General_AutoTranslateOnPromptChanged">Auto-translate on Prompt Switch</sys:String>
     <sys:String x:Key="General_AutoTranslateOnPromptChangedDescription">Re-run translation immediately after switching prompt for AI translation services.</sys:String>
+    <sys:String x:Key="General_IncrementalClearInput">Clear Input on Incremental Translate</sys:String>
+    <sys:String x:Key="General_IncrementalClearInputDescription">When enabled (default), the input box is cleared when incremental translation is triggered; selections during the session are still appended. When disabled, the previous content is kept and new selections are appended to it.</sys:String>
     <sys:String x:Key="General_AutoTranslateDelay">Auto-Translate Delay</sys:String>
     <sys:String x:Key="General_AutoTranslateDelayDescription">Waiting time after inputting content, unit: milliseconds.</sys:String>
     <sys:String x:Key="General_LineBreakHandleType">Line Break Handling</sys:String>

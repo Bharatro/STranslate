@@ -66,6 +66,8 @@
     <sys:String x:Key="General_AutoTranslateButtonVisible">메인 화면에 자동 번역 버튼 표시</sys:String>
     <sys:String x:Key="General_AutoTranslateOnPromptChanged">프롬프트 전환 후 자동 번역</sys:String>
     <sys:String x:Key="General_AutoTranslateOnPromptChangedDescription">AI 번역 서비스의 프롬프트를 전환하면 즉시 번역을 다시 실행합니다.</sys:String>
+    <sys:String x:Key="General_IncrementalClearInput">증분 번역 시 입력 지우기</sys:String>
+    <sys:String x:Key="General_IncrementalClearInputDescription">활성화 시(기본값) 증분 번역이 트리거되면 입력 상자를 지우며, 세션 내 선택 텍스트는 계속 누적됩니다. 비활성화 시 기존 로직을 유지하여 기존 내용을 지우지 않고 바로 추가합니다.</sys:String>
     <sys:String x:Key="General_AutoTranslateDelay">자동 번역 지연</sys:String>
     <sys:String x:Key="General_AutoTranslateDelayDescription">입력 후 대기 시간, 단위: 밀리초.</sys:String>
     <sys:String x:Key="General_LineBreakHandleType">단어 선택 줄 바꿈 처리</sys:String>

@@ -69,6 +69,8 @@
     <sys:String x:Key="General_AutoTranslateButtonVisible">在主界面上顯示自動翻譯按鈕</sys:String>
     <sys:String x:Key="General_AutoTranslateOnPromptChanged">切換提示詞後自動翻譯</sys:String>
     <sys:String x:Key="General_AutoTranslateOnPromptChangedDescription">切換 AI 翻譯服務的提示詞後，立即重新執行翻譯。</sys:String>
+    <sys:String x:Key="General_IncrementalClearInput">增量翻譯時清空輸入</sys:String>
+    <sys:String x:Key="General_IncrementalClearInputDescription">啟用後（預設）觸發增量翻譯時清空輸入框，本次工作階段內選取文字仍累加附加；停用後保留舊邏輯，不清空原有內容，直接附加。</sys:String>
     <sys:String x:Key="General_AutoTranslateDelay">自動翻譯延時</sys:String>
     <sys:String x:Key="General_AutoTranslateDelayDescription">輸入內容等待時間，單位：毫秒。</sys:String>
     <sys:String x:Key="General_LineBreakHandleType">取詞換行處理</sys:String>
