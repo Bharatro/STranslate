@@ -43,6 +43,7 @@
 
     <ItemGroup>
         <InternalsVisibleTo Include="STranslate" />
+        <InternalsVisibleTo Include="STranslate.Tests" />
     </ItemGroup>
 
     <ItemGroup>

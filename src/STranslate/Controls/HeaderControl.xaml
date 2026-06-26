@@ -191,7 +191,7 @@
                                                                                                 Grid.Column="1"
                                                                                                 Width="20"
                                                                                                 Height="20"
-                                                                                                Source="{Binding Service.MetaData.IconPath}" />
+                                                                                                Source="{Binding Service.IconPath, Converter={cnvt:ImagePathToSourceConverter}}" />
                                                                                             <TextBlock
                                                                                                 Grid.Column="2"
                                                                                                 MaxWidth="180"

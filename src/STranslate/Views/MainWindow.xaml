@@ -251,7 +251,7 @@
                                     <Image
                                         Height="{DynamicResource STControlFontSize18}"
                                         Margin="6"
-                                        Source="{Binding MetaData.IconPath}" />
+                                        Source="{Binding IconPath, Converter={cnvt:ImagePathToSourceConverter}}" />
                                 </Button>
                             </DataTemplate>
                         </ListBox.ItemTemplate>

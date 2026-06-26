@@ -413,6 +413,8 @@
     <sys:String x:Key="Reset">초기화</sys:String>
     <sys:String x:Key="Retry">재시도</sys:String>
     <sys:String x:Key="Duplicate">복제</sys:String>
+    <sys:String x:Key="ChangeIcon">아이콘 변경</sys:String>
+    <sys:String x:Key="ResetIcon">아이콘 초기화</sys:String>
     <sys:String x:Key="Official">공식</sys:String>
     <sys:String x:Key="IdentifiedLanguageLabel">감지된 언어</sys:String>
     <sys:String x:Key="On">켜기</sys:String>

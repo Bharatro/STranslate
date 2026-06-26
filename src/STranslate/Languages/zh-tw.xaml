@@ -424,6 +424,8 @@
     <sys:String x:Key="Reset">重設</sys:String>
     <sys:String x:Key="Retry">重試</sys:String>
     <sys:String x:Key="Duplicate">重複</sys:String>
+    <sys:String x:Key="ChangeIcon">更換圖標</sys:String>
+    <sys:String x:Key="ResetIcon">重置圖標</sys:String>
     <sys:String x:Key="Official">官方</sys:String>
     <sys:String x:Key="IdentifiedLanguageLabel">識別為</sys:String>
     <sys:String x:Key="On">開啟</sys:String>
