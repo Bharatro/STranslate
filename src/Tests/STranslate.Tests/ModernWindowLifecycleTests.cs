@@ -2,7 +2,7 @@ using iNKORE.UI.WPF.Modern;
 using iNKORE.UI.WPF.Modern.Controls;
 using iNKORE.UI.WPF.Modern.Controls.Helpers;
 using iNKORE.UI.WPF.Modern.Controls.Primitives;
-using STranslate.Views;
+using STranslate.Helpers;
 using System.Collections;
 using System.ComponentModel;
 using System.Reflection;
@@ -14,7 +14,7 @@ using System.Windows.Media;
 
 namespace STranslate.Tests;
 
-public class ImageTranslateWindowLifecycleTests
+public class ModernWindowLifecycleTests
 {
     [Fact]
     public void DetachVisualTreeClearsWindowOwnedReferences()
@@ -31,7 +31,7 @@ public class ImageTranslateWindowLifecycleTests
                 DataContext = dataContext
             };
 
-            ImageTranslateWindow.DetachVisualTree(window);
+            ModernWindowLifecycle.DetachVisualTree(window);
 
             Assert.Null(window.Content);
             Assert.Null(window.DataContext);
@@ -134,12 +134,12 @@ public class ImageTranslateWindowLifecycleTests
         {
             base.OnClosing(e);
             if (!e.Cancel)
-                ImageTranslateWindow.DetachModernWindowStyle(this);
+                ModernWindowLifecycle.DetachModernWindowStyle(this);
         }
 
         protected override void OnClosed(EventArgs e)
         {
-            ImageTranslateWindow.DetachVisualTree(this);
+            ModernWindowLifecycle.DetachVisualTree(this);
             base.OnClosed(e);
         }
     }

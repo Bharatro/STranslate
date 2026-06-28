@@ -69,6 +69,8 @@
 - `SettingsWindow`：
   - `Navigate(tag)` 根据页面类型从 DI 取页实例并注入到 `RootFrame.Content`。
   - `Ctrl+F` 由 `OnKeyDown` 路由到当前页面的搜索框。
+  - 设置页继续由 root scope 长期复用，兼容插件缓存的设置控件和页面 ViewModel 的全局订阅；窗口关闭时必须先清空 `RootFrame.Content`，再拆除导航视觉树，避免长期页面通过 `Frame` 反向持有已关闭窗口。
+  - `OnClosing` 通过 `ModernWindowLifecycle.DetachModernWindowStyle()` 解除 iNKORE titlebar 的属性描述符监听；`OnClosed` 清空 `DataContext` 和内容树。
 - `WelcomeSetupWindow`：
   - 自动显示只由启动前配置文件是否存在决定，不新增单独的完成标记。
   - 首次自动显示会阻塞主窗口创建，避免新用户先看到主窗口再看到向导；关于页手动打开向导不影响当前主窗口显隐。
@@ -97,6 +99,7 @@
 - `STranslate/Core/ISingleInstanceApp.cs`
 - `STranslate/Views/MainWindow.xaml.cs`
 - `STranslate/Views/SettingsWindow.xaml.cs`
+- `STranslate/Helpers/ModernWindowLifecycle.cs`
 - `STranslate/Core/AppMessageBox.cs`
 - `STranslate/Core/DataLocation.cs`
 - `STranslate/Helpers/UACHelper.cs`

@@ -1,9 +1,11 @@
 using CommunityToolkit.Mvvm.DependencyInjection;
 using iNKORE.UI.WPF.Modern.Controls;
 using STranslate.Core;
+using STranslate.Helpers;
 using STranslate.Plugin;
 using STranslate.ViewModels;
 using STranslate.Views.Pages;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -21,6 +23,28 @@ public partial class SettingsWindow
         DataContext = _viewModel;
 
         InitializeComponent();
+    }
+
+    protected override void OnClosing(CancelEventArgs e)
+    {
+        base.OnClosing(e);
+
+        if (!e.Cancel)
+            ModernWindowLifecycle.DetachModernWindowStyle(this);
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        try
+        {
+            RootNavigation.SelectionChanged -= OnNaviSelectionChanged;
+            RootFrame.Content = null;
+            ModernWindowLifecycle.DetachVisualTree(this);
+        }
+        finally
+        {
+            base.OnClosed(e);
+        }
     }
 
     private void OnNaviSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)

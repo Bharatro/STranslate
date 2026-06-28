@@ -1,4 +1,6 @@
 using CommunityToolkit.Mvvm.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
+using STranslate.Helpers;
 using STranslate.ViewModels;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -8,25 +10,51 @@ namespace STranslate.Views;
 public partial class OcrWindow
 {
     private readonly OcrWindowViewModel _viewModel;
+    private readonly IServiceScope _serviceScope;
 
     public OcrWindow()
     {
-        _viewModel = Ioc.Default.GetRequiredService<OcrWindowViewModel>();
-        DataContext = _viewModel;
+        _serviceScope = Ioc.Default.CreateScope();
+        try
+        {
+            _viewModel = _serviceScope.ServiceProvider.GetRequiredService<OcrWindowViewModel>();
+            DataContext = _viewModel;
 
-        InitializeComponent();
+            InitializeComponent();
+        }
+        catch
+        {
+            _serviceScope.Dispose();
+            throw;
+        }
     }
 
     protected override void OnClosing(CancelEventArgs e)
     {
         _viewModel.CancelOperations();
         base.OnClosing(e);
+
+        if (!e.Cancel)
+            ModernWindowLifecycle.DetachModernWindowStyle(this);
     }
 
     protected override void OnClosed(EventArgs e)
     {
-        _viewModel.Dispose();
-        base.OnClosed(e);
+        try
+        {
+            ModernWindowLifecycle.DetachVisualTree(this);
+        }
+        finally
+        {
+            try
+            {
+                _serviceScope.Dispose();
+            }
+            finally
+            {
+                base.OnClosed(e);
+            }
+        }
     }
 
     private void OpenHyperlink(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)

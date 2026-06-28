@@ -146,7 +146,7 @@
 - **渲染峰值优化（顺带）**：
   - `ExecuteAsync` 生成结果图时复用已缓存并 `Freeze` 的 `_sourceImage`，取消对原图的第二次 `ToBitmapImage` 解码。
 
-- **回归测试**：`SnackbarLifecycleTests` 覆盖 `NoticeBar.IsOpen` 可见性、容器重复释放、显示/隐藏动画最终状态，以及 `NoticeBar`/`SnackbarContainer` 在重复创建释放后可被 GC 回收；`ImageTranslateWindowLifecycleTests` 验证独立窗口关闭后 `WindowStyle` / `ResizeMode` 的属性描述符 tracker 已移除，并验证视觉树引用被清空。
+- **回归测试**：`SnackbarLifecycleTests` 覆盖 `NoticeBar.IsOpen` 可见性、容器重复释放、显示/隐藏动画最终状态，以及 `NoticeBar`/`SnackbarContainer` 在重复创建释放后可被 GC 回收；`ModernWindowLifecycleTests` 验证 modern 窗口关闭后 `WindowStyle` / `ResizeMode` 的属性描述符 tracker 已移除，并验证视觉树引用被清空。
 
 - **诊断方法**：复现泄漏后用 `dotnet-gcdump report` 看是否有 `ImageTranslateCompactWindow`/`ImageTranslateWindowViewModel` 实例数随操作次数线性增长；用 `dotnet-dump analyze` 的 `gcroot <地址>` 追踪引用链，确认是 `PropertyDescriptor._propertyMap` 静态链还是 `ServiceProviderEngineScope._disposables` 钉住。
 
@@ -158,6 +158,7 @@
 - `STranslate/Controls/SnackbarContainer.xaml`
 - `STranslate/Core/Snackbar.cs`
 - `STranslate/Helpers/ImageTranslateRenderer.cs`
+- `STranslate/Helpers/ModernWindowLifecycle.cs`
 - `STranslate/Core/Screenshot.cs`
 - `STranslate/Core/OcrLayoutAnalyzer.cs`
 - `STranslate/Core/OcrLayoutBlock.cs`
@@ -168,7 +169,7 @@
 - `STranslate.Plugin/IOcrPlugin.cs`
 - `Tests/STranslate.Tests/OcrLayoutAnalyzerTests.cs`
 - `Tests/STranslate.Tests/ImageTranslateTextOverlayLayoutTests.cs`
-- `Tests/STranslate.Tests/ImageTranslateWindowLifecycleTests.cs`
+- `Tests/STranslate.Tests/ModernWindowLifecycleTests.cs`
 - `Tests/STranslate.Tests/SnackbarLifecycleTests.cs`
 
 ## 常见改动任务
