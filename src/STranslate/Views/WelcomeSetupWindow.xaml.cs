@@ -34,7 +34,16 @@ public partial class WelcomeSetupWindow
         base.OnClosing(e);
 
         if (!e.Cancel)
+        {
+            // 先断开插件设置 UI 的引用，再拆除 titlebar。
+            // 插件 Main 单例会用 ??= 缓存 GetSettingUI() 返回的控件，该控件被 ContentControl
+            // 嵌入本窗口视觉树后，其依赖属性(Parent/InheritanceContext)会反向引用窗口。
+            // 若不先置空，Main._settingUi 持有的控件会把已关闭窗口钉死无法 GC。
+            _viewModel.TranslateSettingUI = null;
+            _viewModel.OcrSettingUI = null;
+
             ModernWindowLifecycle.DetachModernWindowStyle(this);
+        }
     }
 
     protected override void OnClosed(EventArgs e)
