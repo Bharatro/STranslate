@@ -104,6 +104,19 @@ public class ImageZoom : Control
         DependencyProperty.Register(nameof(Source), typeof(ImageSource), typeof(ImageZoom),
             new FrameworkPropertyMetadata(null, OnSourceChanged));
 
+    public ImageTranslateOverlayDocument? OverlayDocument
+    {
+        get => (ImageTranslateOverlayDocument?)GetValue(OverlayDocumentProperty);
+        set => SetValue(OverlayDocumentProperty, value);
+    }
+
+    public static readonly DependencyProperty OverlayDocumentProperty =
+        DependencyProperty.Register(
+            nameof(OverlayDocument),
+            typeof(ImageTranslateOverlayDocument),
+            typeof(ImageZoom),
+            new FrameworkPropertyMetadata(null));
+
     private static void OnSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var control = (ImageZoom)d;
